@@ -36,7 +36,8 @@ async function getAuthToken(): Promise<string> {
       clientSecret: process.env.CLIENT_SECRET,
     });
 
-    const expiresAt = now + response.data.expires_in;
+    // expires_in from this server is an absolute Unix timestamp (seconds), not a duration
+    const expiresAt = response.data.expires_in;
     cachedToken = {
       token: response.data.access_token,
       expiresAt,
@@ -44,8 +45,7 @@ async function getAuthToken(): Promise<string> {
 
     return response.data.access_token;
   } catch (error) {
-    console.error('Failed to get auth token:', error instanceof Error ? error.message : error);
-    throw new Error('Authentication failed');
+    throw new Error(`Authentication failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
@@ -94,8 +94,8 @@ export async function Log(
         'Content-Type': 'application/json',
       },
     });
-  } catch (error) {
-    console.error('Log error:', error instanceof Error ? error.message : error);
+  } catch (_error) {
+    // Logging must never crash the application
   }
 }
 
